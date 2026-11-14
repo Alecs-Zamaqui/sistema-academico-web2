@@ -1,69 +1,55 @@
 package br.edu.example.sistema_academico.controller;
 
+import br.edu.example.sistema_academico.dto.AlunoRequestDTO;
+import br.edu.example.sistema_academico.dto.AlunoResponseDTO;
 import br.edu.example.sistema_academico.model.Aluno;
 import br.edu.example.sistema_academico.service.AlunoService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/alunos")
-@Tag(name = "Alunos", description = "API REST de gerenciamento de alunos")
 public class AlunoController {
 
-    private final AlunoService alunoService;
+    private final AlunoService service;
 
-    public AlunoController(AlunoService alunoService) {
-        this.alunoService = alunoService;
+    public AlunoController(AlunoService service) {
+        this.service = service;
     }
 
-    // GET /api/alunos - Listar todos (Status 200)
-    @GetMapping
-    @Operation(summary = "Listar todos os alunos")
-    public ResponseEntity<List<Aluno>> listar() {
-        List<Aluno> lista = alunoService.listarTodos();
-        return ResponseEntity.ok(lista);
-    }
-
-    // GET /api/alunos/{id} - Consultar por ID (Status 200 ou 404)
-    @GetMapping("/{id}")
-    @Operation(summary = "Consultar aluno por ID")
-    public ResponseEntity<Aluno> consultarPorId(@PathVariable Long id) {
-        Optional<Aluno> aluno = alunoService.buscarPorId(id);
-        return aluno.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // POST /api/alunos - Cadastrar novo aluno (Status 201)
     @PostMapping
-    @Operation(summary = "Cadastrar novo aluno")
-    public ResponseEntity<Aluno> cadastrar(@RequestBody Aluno aluno) {
-        Aluno novoAluno = alunoService.cadastrar(aluno);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoAluno);
+    public ResponseEntity<AlunoResponseDTO> cadastrar(@Valid @RequestBody AlunoRequestDTO dto) {
+        Aluno aluno = service.cadastrar(dto.nome(), dto.email());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(aluno));
     }
 
-    // PUT /api/alunos/{id} - Atualizar aluno (Status 200 ou 404)
+    @GetMapping
+    public ResponseEntity<List<AlunoResponseDTO>> listar() {
+        return ResponseEntity.ok(service.listar().stream().map(this::toResponse).toList());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AlunoResponseDTO> consultar(@PathVariable Long id) {
+        return ResponseEntity.ok(toResponse(service.consultar(id)));
+    }
+
     @PutMapping("/{id}")
-    @Operation(summary = "Atualizar aluno existente")
-    public ResponseEntity<Aluno> atualizar(@PathVariable Long id, @RequestBody Aluno aluno) {
-        Optional<Aluno> alunoAtualizado = alunoService.atualizar(id, aluno);
-        return alunoAtualizado.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<AlunoResponseDTO> atualizar(@PathVariable Long id,
+                                                      @Valid @RequestBody AlunoRequestDTO dto) {
+        return ResponseEntity.ok(toResponse(service.atualizar(id, dto.nome(), dto.email())));
     }
 
-    // DELETE /api/alunos/{id} - Excluir aluno (Status 204 ou 404)
     @DeleteMapping("/{id}")
-    @Operation(summary = "Excluir aluno por ID")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        boolean deletado = alunoService.excluir(id);
-        if (deletado) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        service.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private AlunoResponseDTO toResponse(Aluno a) {
+        return new AlunoResponseDTO(a.getId(), a.getNome(), a.getEmail());
     }
 }
