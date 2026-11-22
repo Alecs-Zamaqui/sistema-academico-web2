@@ -4,7 +4,11 @@ import br.edu.example.sistema_academico.dto.MatriculaRequestDTO;
 import br.edu.example.sistema_academico.dto.MatriculaResponseDTO;
 import br.edu.example.sistema_academico.model.Matricula;
 import br.edu.example.sistema_academico.service.MatriculaService;
+import br.edu.example.sistema_academico.model.StatusMatricula;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +34,17 @@ public class MatriculaController {
     @GetMapping
     public ResponseEntity<List<MatriculaResponseDTO>> listar() {
         return ResponseEntity.ok(service.listar().stream().map(this::toResponse).toList());
+    }
+
+    // Atividades 34 a 36 e 47/48:
+    // GET /api/matriculas/pesquisa?cursoId=1&status=ATIVA&page=0&size=5&sort=id,desc
+    @GetMapping("/pesquisa")
+    public ResponseEntity<Page<MatriculaResponseDTO>> pesquisar(
+            @RequestParam(required = false) Long alunoId,
+            @RequestParam(required = false) Long cursoId,
+            @RequestParam(required = false) StatusMatricula status,
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(service.pesquisar(alunoId, cursoId, status, pageable).map(this::toResponse));
     }
 
     @GetMapping("/{id}")

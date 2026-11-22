@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -72,6 +73,15 @@ public class GlobalExceptionHandler {
         return montar(HttpStatus.BAD_REQUEST, "Parâmetro inválido",
                 "O valor informado para o parâmetro '" + ex.getName() + "' é inválido.",
                 request, List.of(), "PARAMETRO_INVALIDO");
+    }
+
+    // ---- Parâmetro obrigatório ausente (ex.: /api/alunos/buscar sem ?nome=) -> 400 ----
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErroResponseDTO> tratarParametroAusente(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
+        return montar(HttpStatus.BAD_REQUEST, "Parâmetro inválido",
+                "O parâmetro '" + ex.getParameterName() + "' é obrigatório.",
+                request, List.of(), "PARAMETRO_OBRIGATORIO");
     }
 
     // ---- Qualquer outra exceção -> 500 com mensagem controlada ----

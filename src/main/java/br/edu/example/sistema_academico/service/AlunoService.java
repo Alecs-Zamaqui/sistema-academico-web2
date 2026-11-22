@@ -10,7 +10,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class AlunoService {
@@ -31,9 +35,30 @@ public class AlunoService {
         return alunoRepository.save(new Aluno(null, nome, email));
     }
 
+    private static final Set<String> CAMPOS_ORDENAVEIS = Set.of("id", "nome", "email");
+
+    // Atividades 16 e 17: listagem paginada
     @Transactional(readOnly = true)
-    public List<Aluno> listar() {
-        return alunoRepository.findAll();
+    public Page<Aluno> listar(Pageable pageable) {
+        return alunoRepository.findAll(PaginacaoUtil.limitar(pageable, CAMPOS_ORDENAVEIS));
+    }
+
+    // Atividade 4: busca por nome (somente leitura)
+    @Transactional(readOnly = true)
+    public List<Aluno> buscarPorNome(String nome) {
+        return alunoRepository.buscarPorNome(nome);
+    }
+
+    // Atividades 27 a 30: pesquisa com filtros opcionais, paginação e ordenação
+    @Transactional(readOnly = true)
+    public Page<Aluno> pesquisar(String nome, String email, Pageable pageable) {
+        return alunoRepository.pesquisar(normalizar(nome), normalizar(email),
+                PaginacaoUtil.limitar(pageable, CAMPOS_ORDENAVEIS));
+    }
+
+    /** Filtro em branco vira null, e o JPQL (":param IS NULL") ignora a condição. */
+    private String normalizar(String filtro) {
+        return (filtro == null || filtro.isBlank()) ? null : filtro.trim();
     }
 
     @Transactional(readOnly = true)

@@ -10,7 +10,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CursoService {
@@ -31,6 +35,16 @@ public class CursoService {
     @Transactional(readOnly = true)
     public List<Curso> listar() {
         return cursoRepository.findAll();
+    }
+
+    private static final Set<String> CAMPOS_ORDENAVEIS = Set.of("id", "nome", "cargaHoraria");
+
+    // Parte 20 (desafio): pesquisa paginada de cursos
+    @Transactional(readOnly = true)
+    public Page<Curso> pesquisar(String nome, Integer cargaHorariaMinima, Pageable pageable) {
+        String filtroNome = (nome == null || nome.isBlank()) ? null : nome.trim();
+        return cursoRepository.pesquisar(filtroNome, cargaHorariaMinima,
+                PaginacaoUtil.limitar(pageable, CAMPOS_ORDENAVEIS));
     }
 
     @Transactional(readOnly = true)

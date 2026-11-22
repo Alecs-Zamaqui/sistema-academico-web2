@@ -123,4 +123,21 @@ class MatriculaServiceTest {
 
         assertEquals(StatusMatricula.CANCELADA, m.getStatus());
     }
+
+    @Test
+    @DisplayName("Pesquisa paginada de matrículas repassa filtros e limita o tamanho a 100")
+    void pesquisarLimitaTamanho() {
+        when(repository.pesquisar(any(), any(), any(), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+
+        service.pesquisar(null, 1L, StatusMatricula.ATIVA,
+                org.springframework.data.domain.PageRequest.of(0, 5000));
+
+        org.mockito.ArgumentCaptor<org.springframework.data.domain.Pageable> captor =
+                org.mockito.ArgumentCaptor.forClass(org.springframework.data.domain.Pageable.class);
+        verify(repository).pesquisar(org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.eq(StatusMatricula.ATIVA), captor.capture());
+        assertEquals(100, captor.getValue().getPageSize());
+    }
 }

@@ -7,7 +7,11 @@ import br.edu.example.sistema_academico.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
+import java.util.Set;
 
 import static br.edu.example.sistema_academico.model.StatusMatricula.*;
 
@@ -57,6 +61,32 @@ public class MatriculaService {
     @Transactional(readOnly = true)
     public List<Matricula> listar() {
         return repository.findAll();
+    }
+
+    private static final Set<String> CAMPOS_ORDENAVEIS =
+            Set.of("id", "status", "dataMatricula", "aluno.nome", "curso.nome");
+
+    // Atividades 31 a 33: pesquisa paginada com filtros opcionais
+    @Transactional(readOnly = true)
+    public Page<Matricula> pesquisar(Long alunoId, Long cursoId, StatusMatricula status, Pageable pageable) {
+        return repository.pesquisar(alunoId, cursoId, status,
+                PaginacaoUtil.limitar(pageable, CAMPOS_ORDENAVEIS));
+    }
+
+    // Atividades 9 a 12 e 37/38: consultas por relacionamento (somente leitura)
+    @Transactional(readOnly = true)
+    public List<Matricula> buscarPorNomeAluno(String nome) {
+        return repository.buscarPorNomeAluno(nome);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Matricula> buscarPorNomeCurso(String nome) {
+        return repository.buscarPorNomeCurso(nome);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Matricula> buscarPorCursoEStatus(Long cursoId, StatusMatricula status) {
+        return repository.buscarPorCursoEStatus(cursoId, status);
     }
 
     @Transactional(readOnly = true)

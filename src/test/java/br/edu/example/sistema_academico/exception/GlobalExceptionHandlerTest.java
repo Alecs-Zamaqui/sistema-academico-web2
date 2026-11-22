@@ -56,6 +56,9 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/alunos/{id}")
         public void consultar(@PathVariable("id") Long id) { }
 
+        @GetMapping("/matriculas/pesquisa")
+        public void pesquisar(@RequestParam(value = "status", required = false) Status status) { }
+
         @GetMapping("/erro")
         public void erro() { throw new RuntimeException("SELECT * FROM tb_aluno WHERE senha='123' /home/app"); }
     }
@@ -112,6 +115,16 @@ class GlobalExceptionHandlerTest {
         mvc.perform(get("/api/teste/alunos/abc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.erro").value("Parâmetro inválido"));
+    }
+
+    @Test
+    @DisplayName("status=INVALIDO na pesquisa -> 400 com o padrão de erro")
+    void statusInvalidoNaPesquisa() throws Exception {
+        mvc.perform(get("/api/teste/matriculas/pesquisa").param("status", "INVALIDO"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.erro").value("Parâmetro inválido"))
+                .andExpect(jsonPath("$.path").value("/api/teste/matriculas/pesquisa"));
     }
 
     @Test
